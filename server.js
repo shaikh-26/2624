@@ -22,6 +22,11 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
+// For logins
+function logEvent(event, data) {
+  console.log("📌", event, data);
+}
+
 // Ensure uploads directory exists
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -93,6 +98,7 @@ app.post('/api/upload', upload.single('video'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No video file uploaded' });
 
   const roomId = uuidv4().slice(0, 8).toUpperCase();
+
   rooms[roomId] = {
     host: null,
     guests: [],
@@ -103,7 +109,16 @@ app.post('/api/upload', upload.single('video'), (req, res) => {
     createdAt: Date.now()
   };
 
-  console.log(`✅ Room created: ${roomId} | File: ${req.file.originalname}`);
+  // 🔥 UPLOAD LOG (ADD THIS)
+  console.log("\n🎬 NEW VIDEO UPLOAD");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("Room ID      :", roomId);
+  console.log("File Name    :", req.file.originalname);
+  console.log("Stored File  :", req.file.filename);
+  console.log("File Size    :", (req.file.size / (1024 * 1024)).toFixed(2) + " MB");
+  console.log("Time         :", new Date().toISOString());
+  console.log("━━━━━━━━━━━━━━━━━━━━━━\n");
+
   res.json({ roomId, videoFile: req.file.filename, videoName: req.file.originalname });
 });
 
@@ -127,6 +142,7 @@ io.on('connection', (socket) => {
 
   // Join a room
   socket.on('join-room', ({ roomId, username }) => {
+     logEvent("USER_JOINED", { roomId, username });
     const room = rooms[roomId?.toUpperCase()];
     if (!room) {
       socket.emit('error', { message: 'Room not found. Check your room code.' });
@@ -189,7 +205,7 @@ io.to(upperRoomId).emit('sync-state', {
 
     room.state = { playing: true, currentTime, lastSyncAt: Date.now() };
     socket.to(socket.roomId).emit('video-play', { currentTime, username: socket.username });
-    console.log(`▶️  Room ${socket.roomId}: PLAY at ${currentTime?.toFixed(2)}s`);
+    console.log(`▶ PLAY | Room: ${socket.roomId} | By: ${socket.username} | Time: ${currentTime?.toFixed(2)}s`);
   });
 
   // Host pauses video
@@ -199,7 +215,7 @@ io.to(upperRoomId).emit('sync-state', {
 
     room.state = { playing: false, currentTime, lastSyncAt: Date.now() };
     socket.to(socket.roomId).emit('video-pause', { currentTime, username: socket.username });
-    console.log(`⏸️  Room ${socket.roomId}: PAUSE at ${currentTime?.toFixed(2)}s`);
+    console.log(`⏸ PAUSE | Room: ${socket.roomId} | By: ${socket.username} | Time: ${currentTime?.toFixed(2)}s`);
   });
 
   // Host seeks
