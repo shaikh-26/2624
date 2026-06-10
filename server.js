@@ -123,18 +123,6 @@ app.post('/api/upload', upload.single('video'), (req, res) => {
     videoName: req.file.originalname
   });
 });
-  // 🔥 UPLOAD LOG (ADD THIS)
-  console.log("\n🎬 NEW VIDEO UPLOAD");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("Room ID      :", roomId);
-  console.log("File Name    :", req.file.originalname);
-  console.log("Stored File  :", req.file.filename);
-  console.log("File Size    :", (req.file.size / (1024 * 1024)).toFixed(2) + " MB");
-  console.log("Time         :", new Date().toISOString());
-  console.log("━━━━━━━━━━━━━━━━━━━━━━\n");
-
-  res.json({ roomId, videoFile: req.file.filename, videoName: req.file.originalname });
-});
 
 // Get room info
 app.get('/api/room/:roomId', (req, res) => {
